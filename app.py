@@ -1,7 +1,7 @@
 import os
 from agents import Runner, Agent , OpenAIChatCompletionsModel, AsyncOpenAI , RunConfig
 from dotenv import load_dotenv
-
+import chainlit as cl
 
 load_dotenv()
 
@@ -33,8 +33,31 @@ weather_agent = Agent(
     model = model
 )
 
+@cl.on_chat_start
+async def on_chat_start():
 
-while True:
-    user_input = input('User: ')
-    result = Runner.run_sync(weather_agent  , user_input, run_config=config)
-    print(f"Weather Agent: {result.final_output}")
+    cl.user_session.set('history', [])
+      
+
+    await cl.Message(
+        content="Welcome to the Weather Agent! Ask me about the weather in any location.",
+        author="Weather Agent"
+    ).send() 
+    
+
+@cl.on_message
+async def handle_message(message: cl.Message):
+    if not message.content:
+        await cl.Message(content="Please provide a location to get the weather information.").send()
+        return
+    history = cl.user_session.get('history', [])
+    history.append({"role": "user", "content": message.content})
+     
+   
+
+
+    result = await Runner.run(weather_agent, history, run_config=config)
+    history.append({"role": "assistant", "content": result.final_output})
+    cl.user_session.set('history', history)
+    
+    await cl.Message(content=f"Weather Agent:  {result.final_output}").send()
