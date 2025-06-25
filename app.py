@@ -37,7 +37,7 @@ weather_agent = Agent(
 async def on_chat_start():
 
     cl.user_session.set('history', [])
-      
+      uv run
 
     await cl.Message(
         content="Welcome to the Weather Agent! Ask me about the weather in any location.",
